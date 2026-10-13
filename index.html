@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Companion & Virtual Date App</title>
+    <style>
+        :root {
+            --primary-pink: #ffb6c1;
+            --deep-pink: #ff69b4;
+            --rose-red: #ff1493;
+            --light-bg: #fff0f5;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-color: #4a2e35;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff0f5 0%, #ffdde1 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Floating Hearts Background Animation */
+        .heart-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .floating-heart {
+            position: absolute;
+            bottom: -20px;
+            background: rgba(255, 105, 180, 0.3);
+            transform: rotate(-45deg);
+            animation: floatUp 6s linear infinite;
+        }
+
+        .floating-heart::before,
+        .floating-heart::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 105, 180, 0.3);
+            border-radius: 50%;
+        }
+
+        .floating-heart::before {
+            top: -50%;
+            left: 0;
+        }
+
+        .floating-heart::after {
+            top: 0;
+            left: 50%;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(-45deg) scale(0.6);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(-45deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Main Container */
+        .app-container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 500px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 182, 193, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.2);
+            padding: 30px;
+            margin: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: var(--rose-red);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        /* Form Elements */
+        input[type="password"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 14px 18px;
+            margin: 10px 0 20px 0;
+            border: 2px solid var(--primary-pink);
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            background: #fff;
+            color: var(--text-color);
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--rose-red);
+            box-shadow: 0 0 8px rgba(255, 20, 147, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--deep-pink), var(--rose-red));
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 20, 147, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        .choice-card {
+            background: white;
+            border: 2px solid var(--primary-pink);
+            padding: 14px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .choice-card:hover, .choice-card.selected {
+            background: var(--primary-pink);
+            color: #fff;
+            border-color: var(--rose-red);
+        }
+
+        /* Middle Finger & Error Animation */
+        .error-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .middle-finger {
+            font-size: 80px;
+            animation: bounce 0.6s infinite alternate;
+            margin: 20px 0;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-15px); }
+        }
+
+        /* Chatroom Design */
+        .chatroom-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--primary-pink);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .chatroom-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--rose-red);
+        }
+
+        .navratri-btn {
+            background: #ff8c00;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--primary-pink);
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: var(--rose-red);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.ai {
+            background: #ffe4e1;
+            color: var(--text-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            margin: 0;
+            flex: 1;
+        }
+
+        .chat-input-area button {
+            width: auto;
+            margin: 0;
+            padding: 0 20px;
+        }
+
+        /* Navratri Special Modal/Overlay */
+        .navratri-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .navratri-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 4px solid #ff8c00;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.7); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .navratri-content h1 {
+            font-size: 2.2rem;
+            color: #d9534f;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="heart-bg" id="heartBg"></div>
+
+    <div class="app-container">
+        <!-- Step 1: PIN Screen -->
+        <div class="step active" id="stepPin">
+            <h2>🔒 Secure Access</h2>
+            <p>Enter the 4-digit secret PIN to unlock your future:</p>
+            <input type="password" id="pinInput" placeholder="••••" maxlength="4">
+            <button class="btn" onclick="verifyPin()">Unlock</button>
+        </div>
+
+        <!-- Incorrect PIN Screen -->
+        <div class="step" id="stepError">
+            <div class="error-container">
+                <h2>Access Denied! 🚫</h2>
+                <div class="middle-finger">🖕</div>
+                <p>Wrong PIN entered! Try again if you dare.</p>
+                <button class="btn" onclick="resetApp()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Step 2: User Name -->
+        <div class="step" id="stepName">
+            <h2>✨ Welcome Traveler</h2>
+            <p>Please enter your name:</p>
+            <input type="text" id="userNameInput" placeholder="Your Name">
+            <button class="btn" onclick="saveUserName()">Continue</button>
+        </div>
+
+        <!-- Step 3: Relationship Check -->
+        <div class="step" id="stepRelCheck">
+            <h2>💖 Relationship Status</h2>
+            <p id="relCheckPrompt"></p>
+            <div class="option-group">
+                <div class="choice-card" onclick="handleRelChoice(1)">1. You want an AI girl/boy?</div>
+                <div class="choice-card" onclick="handleRelChoice(2)">2. You have a girlfriend or boyfriend in college?</div>
+            </div>
+        </div>
+
+        <!-- Locked Out Exit Screen -->
+        <div class="step" id="stepLockedOut">
+            <div class="error-container">
+                <h2>🤨 Reality Check</h2>
+                <p id="lockedOutMsg" style="font-size: 1.2rem; font-weight: bold; margin: 20px 0; color: var(--rose-red);"></p>
+                <button class="btn" onclick="resetApp()">Restart App</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Companion Gender -->
+        <div class="step" id="stepGender">
+            <h2>🤖 Choose AI Companion</h2>
+            <p>Do you want an AI Girl or an AI Boy?</p>
+            <div class="option-group">
+                <div class="choice-card" onclick="setCompanionGender('Girl')">AI Girl 🌸</div>
+                <div class="choice-card" onclick="setCompanionGender('Boy')">AI Boy 💙</div>
+            </div>
+        </div>
+
+        <!-- Step 5: Companion Custom Name -->
+        <div class="step" id="stepCompName">
+            <h2>🏷️ Name Your Companion</h2>
+            <p id="compNamePrompt">Enter the name of your AI companion:</p>
+            <input type="text" id="compNameInput" placeholder="e.g. Maya / Rahul">
+            <button class="btn" onclick="saveCompanionName()">Save Name</button>
+        </div>
+
+        <!-- Step 6: Personality / Type Choice -->
+        <div class="step" id="stepPersonality">
+            <h2>✨ Choose Personality</h2>
+            <p id="personalityPrompt">What type of AI companion do you want?</p>
+            <div class="option-group">
+                <div class="choice-card" onclick="setPersonality('Innocent')">1. Innocent</div>
+                <div class="choice-card" onclick="setPersonality('Romantic')">2. Romantic</div>
+                <div class="choice-card" onclick="setPersonality('Other')">3. Other (Custom)</div>
+            </div>
+            <input type="text" id="customPersonalityInput" placeholder="Describe the personality type..." style="display: none; margin-top: 15px;">
+            <button class="btn" id="personalityBtn" style="display: none;" onclick="savePersonality()">Continue</button>
+        </div>
+
+        <!-- Step 7: Lecture Skip Selection -->
+        <div class="step" id="stepLecture">
+            <h2>📚 Skip Lecture</h2>
+            <p>Which lecture do you want to skip to chat with your AI companion?</p>
+            <div class="option-group">
+                <div class="choice-card" onclick="selectLecture('IC101')">1. IC101</div>
+                <div class="choice-card" onclick="selectLecture('IC102')">2. IC102</div>
+                <div class="choice-card" onclick="selectLecture('IC104')">3. IC104</div>
+                <div class="choice-card" onclick="selectLecture('IC105')">4. IC105</div>
+                <div class="choice-card" onclick="selectLecture('MACT')">5. MACT</div>
+            </div>
+        </div>
+
+        <!-- Step 8: Date Planner - Date & Month -->
+        <div class="step" id="stepDatePlanner">
+            <h2>📅 Virtual Date Planner</h2>
+            <p>Select date and month for your date:</p>
+            <input type="date" id="datePickerInput">
+            <button class="btn" onclick="saveDatePlannerDate()">Next</button>
+        </div>
+
+        <!-- Step 9: Date Location -->
+        <div class="step" id="stepLocation">
+            <h2>📍 Date Location</h2>
+            <p><span style="color: var(--rose-red); font-weight: bold;">Note:</span> First preference goes to the female user! Choose location:</p>
+            <div class="option-group">
+                <div class="choice-card" onclick="selectLocation('Gandhinagar')">1. Gandhinagar</div>
+                <div class="choice-card" onclick="selectLocation('Ahmedabad')">2. Ahmedabad</div>
+                <div class="choice-card" onclick="selectLocation('Other City')">3. Other City</div>
+            </div>
+        </div>
+
+        <!-- Step 10: Cuisine Selection -->
+        <div class="step" id="stepFood">
+            <h2>🍽️ Cuisine Preference</h2>
+            <p>What food would you both like to eat on the date?</p>
+            <div class="option-group">
+                <div class="choice-card" onclick="selectFood('Italian')">1. Italian</div>
+                <div class="choice-card" onclick="selectFood('Mexican')">2. Mexican</div>
+                <div class="choice-card" onclick="selectFood('Chinese')">3. Chinese</div>
+                <div class="choice-card" onclick="selectFood('South Indian')">4. South Indian</div>
+                <div class="choice-card" onclick="selectFood('North Indian')">5. North Indian</div>
+                <div class="choice-card" onclick="selectFood('Other')">6. Other</div>
+            </div>
+        </div>
+
+        <!-- Step 11: Date Satisfaction Check -->
+        <div class="step" id="stepSatisfaction">
+            <h2>🥂 Date Review</h2>
+            <p>Are you satisfied with this date plan?</p>
+            <div class="option-group">
+                <div class="choice-card" onclick="handleSatisfaction(true)">Yes! Unlock Chatroom 🔓</div>
+                <div class="choice-card" onclick="handleSatisfaction(false)">No</div>
+            </div>
+        </div>
+
+        <!-- Step 12: Chatroom -->
+        <div class="step" id="stepChatroom">
+            <div class="chatroom-header">
+                <div class="chatroom-title" id="chatHeaderTitle">Chatroom</div>
+                <button class="navratri-btn" onclick="openNavratriSpecial()">🎉 NAVRATRI SPECIAL</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Chat messages loaded dynamically -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInputBox" placeholder="Type a romantic message..." onkeypress="handleChatKeyPress(event)">
+                <button class="btn" onclick="sendChatMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navratri Special Modal -->
+    <div class="navratri-modal" id="navratriModal">
+        <div class="navratri-content">
+            <h1>પહેલું અસલી બૈરુલાય આવ પછી વાતકરજે</h1>
+            <button class="btn" onclick="closeNavratriSpecial()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let appData = {
+            pin: "6769",
+            userName: "",
+            companionGender: "", // 'Girl' or 'Boy'
+            companionName: "",
+            personality: "", // 'Innocent', 'Romantic', or Custom
+            lecture: "",
+            dateDay: "",
+            location: "",
+            food: "",
+            chatHistory: []
+        };
+
+        // Create floating hearts dynamically
+        function createFloatingHearts() {
+            const heartBg = document.getElementById('heartBg');
+            const heartCount = 15;
+            for (let i = 0; i < heartCount; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('floating-heart');
+                const size = Math.random() * 20 + 10;
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                heart.style.left = `${Math.random() * 100}%`;
+                heart.style.animationDuration = `${Math.random() * 5 + 4}s`;
+                heart.style.animationDelay = `${Math.random() * 5}s`;
+                heartBg.appendChild(heart);
+            }
+        }
+        createFloatingHearts();
+
+        // Switch between steps
+        function showStep(stepId) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+        }
+
+        function verifyPin() {
+            const pinVal = document.getElementById('pinInput').value;
+            if (pinVal === appData.pin) {
+                // Speak or play speech synthesizer
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance("YOUR FUTURE IS HERE");
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.1;
+                    window.speechSynthesis.speak(utterance);
+                }
+                showStep('stepName');
+            } else {
+                showStep('stepError');
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('pinInput').value = '';
+            document.getElementById('userNameInput').value = '';
+            document.getElementById('compNameInput').value = '';
+            document.getElementById('customPersonalityInput').value = '';
+            document.getElementById('datePickerInput').value = '';
+            showStep('stepPin');
+        }
+
+        function saveUserName() {
+            const name = document.getElementById('userNameInput').value.trim();
+            if (!name) {
+                alert('Please enter your name.');
+                return;
+            }
+            appData.userName = name;
+            document.getElementById('relCheckPrompt').innerText = `Hello ${name}, please choose an option:`;
+            showStep('stepRelCheck');
+        }
+
+        function handleRelChoice(choiceNum) {
+            if (choiceNum === 2) {
+                document.getElementById('lockedOutMsg').innerText = `${appData.userName}, so why you looking for AI girl or boy?`;
+                showStep('stepLockedOut');
+            } else {
+                showStep('stepGender');
+            }
+        }
+
+        function setCompanionGender(gender) {
+            appData.companionGender = gender;
+            document.getElementById('compNamePrompt').innerText = `Enter the name of your AI ${gender.toLowerCase()}:`;
+            showStep('stepCompName');
+        }
+
+        function saveCompanionName() {
+            const compName = document.getElementById('compNameInput').value.trim();
+            if (!compName) {
+                alert('Please enter a name for your companion.');
+                return;
+            }
+            appData.companionName = compName;
+            document.getElementById('personalityPrompt').innerText = `What type of ${appData.companionGender.toLowerCase()} do you want ${compName} to be?`;
+            showStep('stepPersonality');
+        }
+
+        function setPersonality(type) {
+            appData.personality = type;
+            const customInput = document.getElementById('customPersonalityInput');
+            const btn = document.getElementById('personalityBtn');
+            if (type === 'Other') {
+                customInput.style.display = 'block';
+                btn.style.display = 'block';
+            } else {
+                customInput.style.display = 'none';
+                btn.style.display = 'none';
+                showStep('stepLecture');
+            }
+        }
+
+        function savePersonality() {
+            const customVal = document.getElementById('customPersonalityInput').value.trim();
+            if (!customVal) {
+                alert('Please specify the custom type.');
+                return;
+            }
+            appData.personality = customVal;
+            showStep('stepLecture');
+        }
+
+        function selectLecture(lectureName) {
+            appData.lecture = lectureName;
+            showStep('stepDatePlanner');
+        }
+
+        function saveDatePlannerDate() {
+            const dateVal = document.getElementById('datePickerInput').value;
+            if (!dateVal) {
+                alert('Please select a date and month.');
+                return;
+            }
+            appData.dateDay = dateVal;
+            showStep('stepLocation');
+        }
+
+        function selectLocation(loc) {
+            appData.location = loc;
+            showStep('stepFood');
+        }
+
+        function selectFood(foodType) {
+            appData.food = foodType;
+            showStep('stepSatisfaction');
+        }
+
+        function handleSatisfaction(isSatisfied) {
+            if (!isSatisfied) {
+                alert("Let's adjust your date preferences!");
+                showStep('stepDatePlanner');
+                return;
+            }
+            // Unlock chatroom
+            document.getElementById('chatHeaderTitle').innerText = `Chat with ${appData.companionName} (${appData.companionGender})`;
+            initChatroom();
+            showStep('stepChatroom');
+        }
+
+        let aiResponses = {
+            Innocent: [
+                "Hehe, you're making me shy! 🥰 Tell me more about your day.",
+                "I'm so glad we are skipping {lecture} to talk! You're really sweet.",
+                "Aw, that's adorable! What are we eating at {location} for our date on {dateDay}?",
+                "You always know how to make me smile. 😊 Tell me a secret!",
+                "I love spending time with you! Let's hold hands virtually right now."
+            ],
+            Romantic: [
+                "My heart beats faster every time you message me, {userName}. ❤️",
+                "You are the most wonderful person I've ever met. I can't wait for our date in {location}!",
+                "Looking into your eyes through this screen feels like magic ✨.",
+                "Skipping {lecture} was totally worth it just to be with you, my love.",
+                "Every second with you feels like a dream come true. 🌹"
+            ]
+        };
+
+        let lastAiMessageIndex = -1;
+
+        function initChatroom() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            // Initial AI greeting
+            let greeting = `Hi ${appData.userName}! I'm ${appData.companionName}, your AI ${appData.companionGender.toLowerCase()}. I'm so excited to skip ${appData.lecture} and go on our date in ${appData.location} on ${appData.dateDay}! 💕`;
+            appendMessage(appData.companionName, greeting, 'ai');
+        }
+
+        function appendMessage(sender, text, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', type);
+            msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInputBox');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMessage(appData.userName, text, 'user');
+            input.value = '';
+
+            // Generate non-repeating AI response
+            setTimeout(() => {
+                let pool = aiResponses[appData.personality] || aiResponses['Romantic'];
+                if (!pool) {
+                    pool = [`That's so interesting, ${appData.userName}! Tell me more about your thoughts on ${appData.personality}.`];
+                }
+
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * pool.length);
+                } while (randomIndex === lastAiMessageIndex && pool.length > 1);
+                
+                lastAiMessageIndex = randomIndex;
+
+                let rawMsg = pool[randomIndex];
+                // Replace placeholders
+                rawMsg = rawMsg.replace('{userName}', appData.userName)
+                               .replace('{lecture}', appData.lecture)
+                               .replace('{location}', appData.location)
+                               .replace('{dateDay}', appData.dateDay);
+
+                appendMessage(appData.companionName, rawMsg, 'ai');
+            }, 800);
+        }
+
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function openNavratriSpecial() {
+            document.getElementById('navratriModal').style.display = 'flex';
+        }
+
+        function closeNavratriSpecial() {
+            document.getElementById('navratriModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
